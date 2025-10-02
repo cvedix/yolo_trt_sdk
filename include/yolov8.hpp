@@ -3,47 +3,68 @@
 #include "engine.h"
 #include <fstream>
 
-// Utility method for checking if a file exists on disk
+/**
+ * @brief Utility method for checking if a file exists on disk.
+ *
+ * @param name Path to the file to test.
+ * @return True when the file can be opened, otherwise false.
+ */
 inline bool doesFileExist(const std::string &name) {
     std::ifstream f(name.c_str());
     return f.good();
 }
 
 struct Object {
-    // The object class.
+    /** @brief The detected object class identifier. */
     int label{};
-    // The detection's confidence probability.
+    /** @brief The detection's confidence probability. */
     float probability{};
-    // The object bounding box rectangle.
+    /** @brief The object bounding box rectangle. */
     cv::Rect_<float> rect;
-    // Semantic segmentation mask
+    /** @brief Optional semantic segmentation mask. */
     cv::Mat boxMask;
-    // Pose estimation key points
+    /** @brief Optional pose estimation key points. */
     std::vector<float> kps{};
 };
 
-// Config the behavior of the YoloV8 detector.
-// Can pass these arguments as command line parameters.
+/**
+ * @brief Configuration values that control the YOLOv8 detector behaviour.
+ *
+ * Values map one-to-one with the SDK options and can be supplied through
+ * command-line arguments.
+ */
 struct YoloV8Config {
-    // The precision to be used for inference
+    /** @brief The precision to be used for inference. */
     Precision precision = Precision::FP16;
-    // Calibration data directory. Must be specified when using INT8 precision.
+    /**
+     * @brief Calibration data directory.
+     *
+     * Must be provided when using INT8 precision.
+     */
     std::string calibrationDataDirectory;
-    // Probability threshold used to filter detected objects
+    /** @brief Probability threshold used to filter detected objects. */
     float probabilityThreshold = 0.25f;
-    // Non-maximum suppression threshold
+    /** @brief Non-maximum suppression threshold. */
     float nmsThreshold = 0.65f;
-    // Max number of detected objects to return
+    /** @brief Maximum number of detected objects to return. */
     int topK = 100;
-    // Segmentation config options
+    /** @name Segmentation options */
+    ///@{
     int segChannels = 32;
     int segH = 160;
     int segW = 160;
     float segmentationThreshold = 0.5f;
-    // Pose estimation options
+    ///@}
+    /** @name Pose estimation options */
+    ///@{
     int numKPS = 17;
     float kpsThreshold = 0.5f;
-    // Class thresholds (default are COCO classes)
+    ///@}
+    /**
+     * @brief Class names used when decoding detections.
+     *
+     * Defaults correspond to the COCO dataset classes.
+     */
     std::vector<std::string> classNames = {
         "person",         "bicycle",    "car",           "motorcycle",    "airplane",     "bus",           "train",
         "truck",          "boat",       "traffic light", "fire hydrant",  "stop sign",    "parking meter", "bench",
@@ -59,29 +80,65 @@ struct YoloV8Config {
         "teddy bear",     "hair drier", "toothbrush"};
 };
 
+/**
+ * @brief High-level interface for running YOLOv8 inference with TensorRT.
+ */
 class YoloV8 {
 public:
-    // Builds the onnx model into a TensorRT engine, and loads the engine into memory
+    /**
+     * @brief Construct a YOLOv8 instance.
+     *
+     * Builds the ONNX model into a TensorRT engine and loads it into memory.
+     *
+     * @param onnxModelPath Path to the ONNX model file.
+     * @param trtModelPath Path where the TensorRT engine is stored.
+     * @param config Detector configuration options.
+     */
     YoloV8(const std::string &onnxModelPath, const std::string &trtModelPath, const YoloV8Config &config);
 
-    // Detect the objects in the image
+    /**
+     * @brief Run object detection on a CPU image.
+     *
+     * @param inputImageBGR Input image in BGR format.
+     * @return Vector of detected objects.
+     */
     std::vector<Object> detectObjects(const cv::Mat &inputImageBGR);
+    /**
+     * @brief Run object detection on a GPU image.
+     *
+     * @param inputImageBGR Input GPU image in BGR format.
+     * @return Vector of detected objects.
+     */
     std::vector<Object> detectObjects(const cv::cuda::GpuMat &inputImageBGR);
 
-    // Draw the object bounding boxes and labels on the image
+    /**
+     * @brief Draw detected object labels and bounding boxes on an image.
+     *
+     * @param image Image to annotate.
+     * @param objects Detected objects to draw.
+     * @param scale Text scale factor used when rendering labels.
+     */
     void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
 
 private:
-    // Preprocess the input
+    /**
+     * @brief Preprocess the input GPU image into network-ready tensors.
+     */
     std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg);
 
-    // Postprocess the output
+    /**
+     * @brief Postprocess raw detection output into objects.
+     */
     std::vector<Object> postprocessDetect(std::vector<float> &featureVector);
 
-    // Postprocess the output for pose model
+    /**
+     * @brief Postprocess raw pose output into objects.
+     */
     std::vector<Object> postprocessPose(std::vector<float> &featureVector);
 
-    // Postprocess the output for segmentation model
+    /**
+     * @brief Postprocess raw segmentation output into objects with masks.
+     */
     std::vector<Object> postProcessSegmentation(std::vector<std::vector<float>> &featureVectors);
 
     std::unique_ptr<Engine<float>> m_trtEngine = nullptr;
