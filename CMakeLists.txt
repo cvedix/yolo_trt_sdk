@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(YOLOv8_TensorRT_CPP)
+project(yolo_trt_sdk)
 
 # Use ccache to speed up rebuilds
 include(cmake/ccache.cmake)
@@ -33,6 +33,13 @@ target_include_directories(YoloV8_TRT
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/tensorrt-cpp-api/src)
+
+## C bridge facade to simplify embedding in C/C++ callers (NIF, etc.)
+add_library(yolo_trt_bridge SHARED src/trt_bridge.cpp)
+target_link_libraries(yolo_trt_bridge PUBLIC YoloV8_TRT)
+target_include_directories(yolo_trt_bridge
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 ## Examples (optional)
 if (BUILD_EXAMPLES)

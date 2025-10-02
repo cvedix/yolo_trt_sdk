@@ -8,6 +8,8 @@ YOLOv8 inference using TensorRT (C++), supporting Object Detection, Segmentation
 - `examples/`: CLI samples (image, video/webcam, CSI camera, benchmark)
 - `tests/`: Lightweight tests to verify SDK headers
 - `libs/tensorrt-cpp-api`: Internal TensorRT helper library
+- `include/yolo_trt_bridge.h` + `src/trt_bridge.cpp`: C-compatible bridge exposing a thin API for
+  embedders (Erlang NIFs, C services, etc.) that prefer not to include the full C++ headers.
 
 ### Requirements
 - Ubuntu 20.04/22.04 (Windows not supported)
@@ -77,6 +79,9 @@ Example:
 ### Integrate the SDK into your app
 - Include: `#include <yolov8/yolov8.hpp>` (legacy compatible: `#include "yolov8.h"`)
 - Link target: `YoloV8_TRT` (alias: `yolov8::sdk`)
+- For C environments or to avoid propagating TensorRT/OpenCV build flags, link against the
+  optional `yolo_trt_bridge` shared library and include `yolo_trt_bridge.h`. The bridge wraps the
+  C++ API behind `extern "C"` and only requires a callback to consume detections.
 
 Minimal example:
 

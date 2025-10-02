@@ -1,5 +1,5 @@
 #include "cmd_line_util.h"
-#include "yolov8.h"
+#include "yolov8.hpp"
 #include <opencv2/cudaimgproc.hpp>
 
 // Benchmarks the specified model

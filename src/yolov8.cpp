@@ -1,4 +1,4 @@
-#include "yolov8.h"
+#include "yolov8.hpp"
 #include <opencv2/cudaimgproc.hpp>
 
 YoloV8::YoloV8(const std::string &onnxModelPath, const std::string &trtModelPath, const YoloV8Config &config)

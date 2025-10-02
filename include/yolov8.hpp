@@ -1,6 +1,6 @@
 // Public SDK header matching original API (keeps compatibility)
 #pragma once
-#include "../../libs/tensorrt-cpp-api/src/engine.h"
+#include "engine.h"
 #include <fstream>
 
 // Utility method for checking if a file exists on disk

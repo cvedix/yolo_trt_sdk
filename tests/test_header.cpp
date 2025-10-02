@@ -1,4 +1,4 @@
-#include <yolov8/yolov8.hpp>
+#include <yolov8.hpp>
 #include <iostream>
 
 int main() {
